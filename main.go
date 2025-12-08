@@ -1,9 +1,10 @@
 package main
 
 import (
+	"bytes"
 	"embed"
-	"fmt"
 	"html/template"
+	"io"
 	"log"
 	"net/http"
 )
@@ -16,15 +17,24 @@ func main() {
 	if err != nil {
 		log.Fatalf("Failed to parse templates: %s", err)
 	}
+	index := templates.Lookup("index.html")
+
 	mux := http.NewServeMux()
 	mux.HandleFunc("/", func(w http.ResponseWriter, req *http.Request) {
-		w.Header().Set("Content-Type", "text/plain")
-		_, _ = fmt.Fprintf(w, "Request for %s %s\n", req.Method, req.URL)
-		_, _ = fmt.Fprintf(w, "Templates:\n")
-		for _, t := range templates.Templates() {
-			_, _ = fmt.Fprintf(w, "%s\n", t.Name())
+		var buf bytes.Buffer
+		err := index.Execute(&buf, nil)
+		if err != nil {
+			handleError(err, w)
+			return
 		}
+		_, _ = io.Copy(w, &buf)
 	})
 
 	http.ListenAndServe("localhost:8081", mux)
+}
+
+func handleError(err error, w http.ResponseWriter) {
+	w.Header().Set("Content-Type", "text/plain")
+	w.WriteHeader(http.StatusInternalServerError)
+	w.Write([]byte(err.Error()))
 }
