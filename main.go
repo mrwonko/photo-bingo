@@ -13,6 +13,7 @@ import (
 	"net/url"
 	"os"
 	"os/signal"
+	"strconv"
 	"sync"
 	"time"
 )
@@ -64,8 +65,9 @@ func main() {
 		}
 		return res
 	}
-	index := mustLookup("index.html")
 	signup := mustLookup("signup.html")
+	index := mustLookup("index.html")
+	space := mustLookup("space.html")
 
 	err = loadState()
 	if err != nil {
@@ -101,6 +103,44 @@ func main() {
 			gameData.Score = board.score()
 		})
 		serveTemplate(w, index, gameData)
+	})
+
+	mux.HandleFunc("/spaces/{x}/{y}", func(w http.ResponseWriter, r *http.Request) {
+		logf("%s request to %s", r.Method, r.URL)
+
+		// TODO refactor this auth check
+		user, err := checkAuth(r)
+		if err != nil {
+			serveError(w, http.StatusUnauthorized, err)
+			return
+		}
+		if user == nil {
+			serveTemplate(w, signup, SignupData{
+				RedirectPath: url.PathEscape(r.URL.Path),
+				BaseURL:      basePath,
+			})
+			return
+		}
+		logf("Authorized user %q", *user)
+
+		x, err := strconv.Atoi(r.PathValue("x"))
+		if err != nil || x < 0 || x >= 5 {
+			serveError(w, http.StatusBadRequest, fmt.Errorf("invalid X value"))
+		}
+		y, err := strconv.Atoi(r.PathValue("y"))
+		if err != nil || y < 0 || y >= 5 {
+			serveError(w, http.StatusBadRequest, fmt.Errorf("invalid Y value"))
+		}
+
+		spaceData := SpaceData{
+			BaseURL: basePath,
+		}
+		gameState.Read(func(gs GameState) {
+			board := gs.Players[*user].Board
+			displayBoard := board.display()
+			spaceData.Space = *displayBoard.get(x, y)
+		})
+		serveTemplate(w, space, spaceData)
 	})
 
 	// TODO handle /spaces/$x/$y (with auth -> create auth middleware)

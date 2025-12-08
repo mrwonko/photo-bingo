@@ -1,24 +1,11 @@
 {{template "header.html" dict "Title" "Photo Bingo"}}
 
-{{.User}}
+<h3>{{.Space.Goal.Name}}</h3>
 
-{{- $baseURL := .BaseURL -}}
+<p>{{.Space.Goal.Description}}</p>
 
-<table border="1">
-    {{range $y, $col := .Board -}}
-    <tr>
-        {{range $x, $space := $col -}}
-        <td class="{{if $space.Completed}}completed{{else}}incomplete{{end}}">
-            <a href="{{$baseURL}}/spaces/{{$x}}/{{$y}}">
-                {{if $space.Completed}}✅{{else}}❌{{end}}<br />
-                {{$space.Goal.Name}}
-            </a>
-        </td>
-        {{- end}}
-    </tr>
-    {{- end}}
-</table>
+<p><em>TODO: let users mark spaces as completed 😅</em></p>
 
-Score: {{.Score}}
+<a href="{{.BaseURL}}">Back</a>
 
 {{template "footer.html"}}
