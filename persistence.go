@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
+	"fmt"
 	"log"
 	"os"
 )
@@ -60,6 +61,22 @@ func saveState(ctx context.Context, trigger <-chan struct{}) {
 }
 
 func loadState() error {
-	// TODO
+	var loadedState GameState
+	stateJSON, err := os.ReadFile(latestStatePath)
+	if err != nil {
+		if errors.Is(err, os.ErrNotExist) {
+			// first launch / no saved state -> done
+			return nil
+		}
+		return fmt.Errorf("reading state file %q: %w", latestStatePath, err)
+	}
+	err = json.Unmarshal(stateJSON, &loadedState)
+	if err != nil {
+		return fmt.Errorf("unmarshaling state file %q: %w", latestStatePath, err)
+	}
+	gameState.Modify(func(gs GameState) GameState {
+		return loadedState
+	})
+	logf("game state loaded from %q", latestStatePath)
 	return nil
 }

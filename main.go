@@ -55,6 +55,11 @@ func main() {
 	index := mustLookup("index.html")
 	signup := mustLookup("signup.html")
 
+	err = loadState()
+	if err != nil {
+		log.Fatalf("failed to load state: %s", err)
+	}
+
 	saveTrigger := make(chan struct{}, 32) // keep a buffer to try to avoid blocking on high traffic
 
 	mux := http.NewServeMux()
