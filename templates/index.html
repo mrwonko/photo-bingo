@@ -2,13 +2,17 @@
 
 {{.User}}
 
+{{- $baseURL := .BaseURL -}}
+
 <table border="1">
     {{range $y, $col := .Board -}}
     <tr>
         {{range $x, $space := $col -}}
         <td class="{{if $space.Completed}}completed{{else}}incomplete{{end}}">
-            {{if $space.Completed}}✅{{else}}❌{{end}}<br />
-            {{$space.Goal.Name}}
+            <a href="{{$baseURL}}/spaces/{{$x}}/{{$y}}">
+                {{if $space.Completed}}✅{{else}}❌{{end}}<br />
+                {{$space.Goal.Name}}
+            </a>
         </td>
         {{- end}}
     </tr>

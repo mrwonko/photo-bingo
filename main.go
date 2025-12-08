@@ -23,9 +23,10 @@ type SignupData struct {
 }
 
 type GameData struct {
-	User  PlayerName
-	Board DisplayBingoBoard
-	Score int
+	BaseURL string
+	User    PlayerName
+	Board   DisplayBingoBoard
+	Score   int
 }
 
 //go:embed templates
@@ -86,7 +87,8 @@ func main() {
 		}
 		logf("Authorized user %q", *user)
 		gameData := GameData{
-			User: *user,
+			BaseURL: basePath,
+			User:    *user,
 		}
 		gameState.Read(func(gs GameState) {
 			board := gs.Players[*user].Board
