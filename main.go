@@ -22,6 +22,10 @@ type SignupData struct {
 	BaseURL      string
 }
 
+type GameData struct {
+	Board DisplayBingoBoard
+}
+
 //go:embed templates
 var templateFS embed.FS
 
@@ -79,7 +83,13 @@ func main() {
 			return
 		}
 		logf("Authorized user %q", *user)
-		serveTemplate(w, index, nil)
+		var board DisplayBingoBoard
+		gameState.Read(func(gs GameState) {
+			board = gs.Players[*user].Board.display()
+		})
+		serveTemplate(w, index, GameData{
+			Board: board,
+		})
 	})
 	mux.HandleFunc("POST /signup", func(w http.ResponseWriter, r *http.Request) {
 		logf("signup %q", r.FormValue("username"))
@@ -132,7 +142,8 @@ func main() {
 }
 
 func serveTemplate(w http.ResponseWriter, t *template.Template, data any) {
-	logf("serving template %q with data %#v", t.Name(), data)
+	//logf("serving template %q with data %#v", t.Name(), data)
+	logf("serving template %q", t.Name())
 	var buf bytes.Buffer
 	err := t.Execute(&buf, data)
 	if err != nil {

@@ -1,5 +1,15 @@
 {{template "header.html" dict "Title" "Photo Bingo"}}
 
-TODO
+<table>
+    {{range $y, $col := .Board -}}
+    <tr>
+        {{range $x, $space := $col -}}
+        <td>
+            {{$space.Goal.Name}}
+        </td>
+        {{- end}}
+    </tr>
+    {{- end}}
+</table>
 
 {{template "footer.html"}}

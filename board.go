@@ -11,6 +11,41 @@ var freeGoal = Goal{Name: "Free Space", Description: "Automatically completed."}
 
 const freeGoalIdx = -1
 
+// DisplayBingoSpace is a denormalized [BingoSpace] for template rendering.
+type DisplayBingoSpace struct {
+	Goal      Goal
+	Completed bool
+	Image     string
+	Locked    bool
+}
+type DisplayBingoRow [5]DisplayBingoSpace
+type DisplayBingoBoard [5]DisplayBingoRow
+
+func (board *DisplayBingoBoard) get(x, y int) *DisplayBingoSpace {
+	return &(*board)[y][x]
+}
+
+func (board BingoBoard) display() DisplayBingoBoard {
+	var res DisplayBingoBoard
+	for x := range 5 {
+		for y := range 5 {
+			src := board.get(x, y)
+			isFreeGoal := src.GoalIdx == freeGoalIdx
+			goal := freeGoal
+			if !isFreeGoal {
+				goal = options[src.GoalIdx]
+			}
+			*res.get(x, y) = DisplayBingoSpace{
+				Goal:      goal,
+				Completed: src.Completed,
+				Locked:    isFreeGoal,
+				Image:     src.Image,
+			}
+		}
+	}
+	return res
+}
+
 type BingoSpace struct {
 	GoalIdx   int    `json:"ix"` // index into [options] or [freeGoalIdx]
 	Completed bool   `json:"ok"`
