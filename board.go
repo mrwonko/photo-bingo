@@ -7,10 +7,14 @@ type Goal struct {
 	Description string
 }
 
+var freeGoal = Goal{Name: "Free Space", Description: "Automatically completed."}
+
+const freeGoalIdx = -1
+
 type BingoSpace struct {
-	Goal      Goal
-	Completed bool
-	Image     string // empty = none
+	GoalIdx   int    `json:"ix"` // index into [options] or [freeGoalIdx]
+	Completed bool   `json:"ok"`
+	Image     string `json:"img"` // empty = none
 }
 
 type BingoRow [5]BingoSpace
@@ -58,8 +62,10 @@ func (board *BingoBoard) score() int {
 }
 
 func generateBoard() BingoBoard {
-	goals := options
-	copy(goals[:], options[:])
+	var goals [len(options)]int
+	for i := range goals {
+		goals[i] = i
+	}
 	rand.Shuffle(len(goals), func(i, j int) {
 		goals[i], goals[j] = goals[j], goals[i]
 	})
@@ -69,10 +75,10 @@ func generateBoard() BingoBoard {
 		for y := range 5 {
 			space := res.get(x, y)
 			if x == 2 && y == 2 {
-				space.Goal = Goal{Name: "Free Space", Description: "Automatically completed."}
+				space.GoalIdx = freeGoalIdx
 				space.Completed = true
 			} else {
-				space.Goal = goals[i]
+				space.GoalIdx = goals[i]
 				i++
 			}
 		}

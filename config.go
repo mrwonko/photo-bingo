@@ -3,6 +3,9 @@ package main
 const (
 	basePath = "/photo-bingo"
 	verbose  = true
+
+	latestStatePath   = "state.json"
+	previousStatePath = "state.prev.json"
 )
 
 var options = [5*5 - 1]Goal{

@@ -2,6 +2,7 @@ package main
 
 import (
 	"bytes"
+	"context"
 	"embed"
 	"errors"
 	"fmt"
@@ -10,6 +11,10 @@ import (
 	"log"
 	"net/http"
 	"net/url"
+	"os"
+	"os/signal"
+	"sync"
+	"time"
 )
 
 type SignupData struct {
@@ -50,6 +55,8 @@ func main() {
 	index := mustLookup("index.html")
 	signup := mustLookup("signup.html")
 
+	saveTrigger := make(chan struct{}, 32) // keep a buffer to try to avoid blocking on high traffic
+
 	mux := http.NewServeMux()
 	mux.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
 		logf("%s request to %s", r.Method, r.URL)
@@ -80,11 +87,43 @@ func main() {
 			serveError(w, http.StatusBadRequest, err)
 			return
 		}
+		// save new user
+		saveTrigger <- struct{}{}
 		http.Redirect(w, r, basePath+path, http.StatusSeeOther)
 	})
 
 	log.Print("serving")
-	http.ListenAndServe("localhost:8081", mux)
+	srv := &http.Server{
+		Addr:    "localhost:8081",
+		Handler: mux,
+	}
+	sigCtx, sigStop := signal.NotifyContext(context.Background(), os.Interrupt)
+	defer sigStop()
+	wg := new(sync.WaitGroup)
+	wg.Add(1)
+	go func() {
+		defer wg.Done()
+		err := srv.ListenAndServe()
+		logf("ListenAndServe exited: %s", err)
+	}()
+	wg.Add(1)
+	go func() {
+		defer wg.Done()
+		saveState(sigCtx, saveTrigger)
+	}()
+
+	<-sigCtx.Done()
+	log.Print("shutting down")
+
+	shutdownCtx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+	err = srv.Shutdown(shutdownCtx)
+	if err != nil {
+		logf("shutdown err: %s", err)
+	}
+	wg.Wait()
+
+	log.Print("goodbye")
 }
 
 func serveTemplate(w http.ResponseWriter, t *template.Template, data any) {
