@@ -30,7 +30,7 @@ var options = [5*5 - 1]Goal{
 	{Name: "Abstract", Description: "Capture an image where the subject is obscured or non-representational. Focus on shapes, lines, textures, and colors to create a piece of visual art."},
 	{Name: "Geometry", Description: "Focus on lines, shapes, patterns, and forms in your environment. Look for triangles, circles, squares, leading lines, or repeating elements to create a strong, structured composition."},
 	{Name: "Leading Lines", Description: "Find a composition where lines (roads, fences, shadows, railings) naturally guide the viewer's eye toward your main subject or deeper into the frame. Focus on creating depth and visual flow."},
-	{Name: "", Description: ""},
-	{Name: "", Description: ""},
-	{Name: "", Description: ""},
+	{Name: "The Light Source", Description: "Capture a photograph where the source of illumination itself is the central or most important element of the frame. This could be the sun breaking through trees, a single streetlamp at night, a neon sign, or a candle flame. Focus on the quality of the light and how the source appears."},
+	{Name: "Frame Within a Frame", Description: "Use a natural or man-made element in the environment (like a doorway, window, archway, branches, or an opening in a fence) to surround or partially frame your main subject. This technique adds depth and focuses the viewer's attention."},
+	{Name: "Unexpected Juxtaposition", Description: "Find two elements or subjects in the same frame that are visually or conceptually opposite to each other (e.g., old vs. new, large vs. small, natural vs. industrial, chaos vs. order). The goal is to create contrast or a sense of visual irony."},
 }
