@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"embed"
 	"errors"
+	"fmt"
 	"html/template"
 	"io"
 	"log"
@@ -12,7 +13,8 @@ import (
 )
 
 type SignupData struct {
-	Path string
+	RedirectPath string
+	BaseURL      string
 }
 
 //go:embed templates
@@ -52,15 +54,33 @@ func main() {
 	mux.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
 		logf("%s request to %s", r.Method, r.URL)
 
-		//TODO if req.CookiesNamed("session_id")
-		serveTemplate(w, signup, SignupData{
-			Path: url.PathEscape(r.URL.Path),
-		})
+		user, err := checkAuth(r)
+		if err != nil {
+			serveError(w, http.StatusUnauthorized, err)
+			return
+		}
+		if user == nil {
+			serveTemplate(w, signup, SignupData{
+				RedirectPath: url.PathEscape(r.URL.Path),
+				BaseURL:      basePath,
+			})
+			return
+		}
+		logf("Authorized user %q", *user)
+		serveTemplate(w, index, nil)
 	})
 	mux.HandleFunc("POST /signup", func(w http.ResponseWriter, r *http.Request) {
 		logf("signup %q", r.FormValue("username"))
-		// TODO
-		serveTemplate(w, index, nil)
+		path, err := url.PathUnescape(r.URL.Query().Get("path"))
+		if err != nil {
+			serveError(w, http.StatusBadRequest, fmt.Errorf("unescaping redirect destination: %w", err))
+			return
+		}
+		if err := signUp(w, r); err != nil {
+			serveError(w, http.StatusBadRequest, err)
+			return
+		}
+		http.Redirect(w, r, basePath+path, http.StatusSeeOther)
 	})
 
 	log.Print("serving")
@@ -72,15 +92,18 @@ func serveTemplate(w http.ResponseWriter, t *template.Template, data any) {
 	var buf bytes.Buffer
 	err := t.Execute(&buf, data)
 	if err != nil {
-		handleError(err, w)
+		serveError(w, http.StatusInternalServerError, err)
 		return
 	}
-	_, _ = io.Copy(w, &buf)
+	_, err = io.Copy(w, &buf)
+	if err != nil {
+		logf("Failed to serve %q: %s", t.Name(), err)
+	}
 }
 
-func handleError(err error, w http.ResponseWriter) {
+func serveError(w http.ResponseWriter, statusCode int, err error) {
 	w.Header().Set("Content-Type", "text/plain")
-	w.WriteHeader(http.StatusInternalServerError)
+	w.WriteHeader(statusCode)
 	w.Write([]byte(err.Error()))
 }
 

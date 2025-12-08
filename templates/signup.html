@@ -1,6 +1,6 @@
 {{template "header.html" dict "Title" "Photo Bingo"}}
 
-<form method="POST" action="signup?path={{.Path}}">
+<form method="POST" action="{{.BaseURL}}/signup?path={{.RedirectPath}}">
     <label for="username">Name:</label>
     <input type="text" id="username" name="username" autocomplete="name" required>
     <button type="submit">Join</button>

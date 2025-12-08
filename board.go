@@ -1,7 +1,14 @@
 package main
 
+import "math/rand/v2"
+
+type Goal struct {
+	Name        string
+	Description string
+}
+
 type BingoSpace struct {
-	Name      string
+	Goal      Goal
 	Completed bool
 	Image     string // empty = none
 }
@@ -45,6 +52,29 @@ func (board *BingoBoard) score() int {
 	for i := range 2 {
 		if diags[i] == 5 {
 			res++
+		}
+	}
+	return res
+}
+
+func generateBoard() BingoBoard {
+	goals := options
+	copy(goals[:], options[:])
+	rand.Shuffle(len(goals), func(i, j int) {
+		goals[i], goals[j] = goals[j], goals[i]
+	})
+	var res BingoBoard
+	i := 0
+	for x := range 5 {
+		for y := range 5 {
+			space := res.get(x, y)
+			if x == 2 && y == 2 {
+				space.Goal = Goal{Name: "Free Space", Description: "Automatically completed."}
+				space.Completed = true
+			} else {
+				space.Goal = goals[i]
+				i++
+			}
 		}
 	}
 	return res
