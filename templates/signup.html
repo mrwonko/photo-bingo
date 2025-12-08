@@ -1,0 +1,9 @@
+{{template "header.html" dict "Title" "Photo Bingo"}}
+
+<form method="POST" action="signup?path={{.Path}}">
+    <label for="username">Name:</label>
+    <input type="text" id="username" name="username" autocomplete="name" required>
+    <button type="submit">Join</button>
+</form>
+
+{{template "footer.html"}}
