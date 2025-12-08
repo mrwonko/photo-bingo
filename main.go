@@ -3,6 +3,7 @@ package main
 import (
 	"bytes"
 	"embed"
+	"errors"
 	"html/template"
 	"io"
 	"log"
@@ -13,7 +14,22 @@ import (
 var templateFS embed.FS
 
 func main() {
-	templates, err := template.ParseFS(templateFS, "templates/*.html")
+	templates, err := template.New("").Funcs(template.FuncMap{
+		"dict": func(values ...any) (map[string]any, error) {
+			if len(values)%2 != 0 {
+				return nil, errors.New("invalid dict call with odd number of args")
+			}
+			dict := make(map[string]any, len(values)/2)
+			for i := 0; i < len(values); i += 2 {
+				key, ok := values[i].(string)
+				if !ok {
+					return nil, errors.New("dict keys must be strings")
+				}
+				dict[key] = values[i+1]
+			}
+			return dict, nil
+		},
+	}).ParseFS(templateFS, "templates/*.html")
 	if err != nil {
 		log.Fatalf("Failed to parse templates: %s", err)
 	}
