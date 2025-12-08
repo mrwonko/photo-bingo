@@ -37,16 +37,20 @@ func main() {
 
 	mux := http.NewServeMux()
 	mux.HandleFunc("/", func(w http.ResponseWriter, req *http.Request) {
-		var buf bytes.Buffer
-		err := index.Execute(&buf, nil)
-		if err != nil {
-			handleError(err, w)
-			return
-		}
-		_, _ = io.Copy(w, &buf)
+		serveTemplate(w, index, nil)
 	})
 
 	http.ListenAndServe("localhost:8081", mux)
+}
+
+func serveTemplate(w http.ResponseWriter, t *template.Template, data any) {
+	var buf bytes.Buffer
+	err := t.Execute(&buf, nil)
+	if err != nil {
+		handleError(err, w)
+		return
+	}
+	_, _ = io.Copy(w, &buf)
 }
 
 func handleError(err error, w http.ResponseWriter) {
