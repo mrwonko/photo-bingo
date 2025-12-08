@@ -25,7 +25,7 @@ func (board *DisplayBingoBoard) get(x, y int) *DisplayBingoSpace {
 	return &(*board)[y][x]
 }
 
-func (board BingoBoard) display() DisplayBingoBoard {
+func (board *BingoBoard) display() DisplayBingoBoard {
 	var res DisplayBingoBoard
 	for x := range 5 {
 		for y := range 5 {

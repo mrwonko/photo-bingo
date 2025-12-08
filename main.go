@@ -23,7 +23,9 @@ type SignupData struct {
 }
 
 type GameData struct {
+	User  PlayerName
 	Board DisplayBingoBoard
+	Score int
 }
 
 //go:embed templates
@@ -83,13 +85,15 @@ func main() {
 			return
 		}
 		logf("Authorized user %q", *user)
-		var board DisplayBingoBoard
+		gameData := GameData{
+			User: *user,
+		}
 		gameState.Read(func(gs GameState) {
-			board = gs.Players[*user].Board.display()
+			board := gs.Players[*user].Board
+			gameData.Board = board.display()
+			gameData.Score = board.score()
 		})
-		serveTemplate(w, index, GameData{
-			Board: board,
-		})
+		serveTemplate(w, index, gameData)
 	})
 	mux.HandleFunc("POST /signup", func(w http.ResponseWriter, r *http.Request) {
 		logf("signup %q", r.FormValue("username"))

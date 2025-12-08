@@ -1,15 +1,20 @@
 {{template "header.html" dict "Title" "Photo Bingo"}}
 
-<table>
+{{.User}}
+
+<table border="1">
     {{range $y, $col := .Board -}}
     <tr>
         {{range $x, $space := $col -}}
-        <td>
+        <td class="{{if $space.Completed}}completed{{else}}incomplete{{end}}">
+            {{if $space.Completed}}✅{{else}}❌{{end}}<br />
             {{$space.Goal.Name}}
         </td>
         {{- end}}
     </tr>
     {{- end}}
 </table>
+
+Score: {{.Score}}
 
 {{template "footer.html"}}
