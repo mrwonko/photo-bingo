@@ -29,6 +29,11 @@ type GameData struct {
 	Score   int
 }
 
+type SpaceData struct {
+	BaseURL string
+	Space   DisplayBingoSpace
+}
+
 //go:embed templates
 var templateFS embed.FS
 
@@ -97,6 +102,9 @@ func main() {
 		})
 		serveTemplate(w, index, gameData)
 	})
+
+	// TODO handle /spaces/$x/$y (with auth -> create auth middleware)
+
 	mux.HandleFunc("POST /signup", func(w http.ResponseWriter, r *http.Request) {
 		logf("signup %q", r.FormValue("username"))
 		path, err := url.PathUnescape(r.URL.Query().Get("path"))
