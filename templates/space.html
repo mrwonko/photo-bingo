@@ -1,10 +1,13 @@
 {{template "header.html" dict "Title" "Photo Bingo"}}
 
-<h3>{{.Space.Goal.Name}}</h3>
+<h3>{{if .Space.Completed}}✅{{else}}❌{{end}} {{.Space.Goal.Name}}</h3>
 
 <p>{{.Space.Goal.Description}}</p>
 
-<p><em>TODO: let users mark spaces as completed 😅</em></p>
+<form method="POST">
+    <input type="hidden" name="action" value="{{if .Space.Completed}}decomplete{{else}}complete{{end}}" />
+    <button type="submit">{{if .Space.Completed}}de-complete{{else}}complete{{end}}</button>
+</form>
 
 <a href="{{.BaseURL}}">Back</a>
 

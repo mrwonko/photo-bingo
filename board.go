@@ -30,20 +30,24 @@ func (board *BingoBoard) display() DisplayBingoBoard {
 	for x := range 5 {
 		for y := range 5 {
 			src := board.get(x, y)
-			isFreeGoal := src.GoalIdx == freeGoalIdx
-			goal := freeGoal
-			if !isFreeGoal {
-				goal = options[src.GoalIdx]
-			}
-			*res.get(x, y) = DisplayBingoSpace{
-				Goal:      goal,
-				Completed: src.Completed,
-				Locked:    isFreeGoal,
-				Image:     src.Image,
-			}
+			*res.get(x, y) = src.display()
 		}
 	}
 	return res
+}
+
+func (space *BingoSpace) display() DisplayBingoSpace {
+	isFreeGoal := space.GoalIdx == freeGoalIdx
+	goal := freeGoal
+	if !isFreeGoal {
+		goal = options[space.GoalIdx]
+	}
+	return DisplayBingoSpace{
+		Goal:      goal,
+		Completed: space.Completed,
+		Locked:    isFreeGoal,
+		Image:     space.Image,
+	}
 }
 
 type BingoSpace struct {

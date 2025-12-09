@@ -132,13 +132,34 @@ func main() {
 			serveError(w, http.StatusBadRequest, fmt.Errorf("invalid Y value"))
 		}
 
+		action := r.FormValue("action")
+
 		spaceData := SpaceData{
 			BaseURL: basePath,
 		}
-		gameState.Read(func(gs GameState) {
-			board := gs.Players[*user].Board
-			displayBoard := board.display()
-			spaceData.Space = *displayBoard.get(x, y)
+		gameState.Modify(func(gs GameState) GameState {
+			switch action {
+
+			}
+			return gs
+		})
+		gameState.Modify(func(gs GameState) GameState {
+			pd := gs.Players[*user]
+			space := pd.Board.get(x, y)
+			needsUpdate := true
+			switch action {
+			case "complete":
+				space.Completed = true
+			case "decomplete":
+				space.Completed = false
+			default:
+				needsUpdate = false
+			}
+			if needsUpdate {
+				gs.Players[*user] = pd
+			}
+			spaceData.Space = space.display()
+			return gs
 		})
 		serveTemplate(w, space, spaceData)
 	})
