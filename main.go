@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"context"
 	"embed"
+	"encoding/base64"
 	"errors"
 	"fmt"
 	"html/template"
@@ -13,6 +14,7 @@ import (
 	"net/url"
 	"os"
 	"os/signal"
+	"path"
 	"strconv"
 	"sync"
 	"time"
@@ -69,6 +71,13 @@ func main() {
 	index := mustLookup("index.html")
 	space := mustLookup("space.html")
 
+	if _, err := os.Stat(imagePath); errors.Is(err, os.ErrNotExist) {
+		err = os.MkdirAll(imagePath, 0700)
+		if err != nil {
+			log.Fatalf("Failed to create image directory %q: %s", imagePath, err)
+		}
+	}
+
 	err = loadState()
 	if err != nil {
 		log.Fatalf("failed to load state: %s", err)
@@ -77,6 +86,11 @@ func main() {
 	saveTrigger := make(chan struct{}, 32) // keep a buffer to try to avoid blocking on high traffic
 
 	mux := http.NewServeMux()
+
+	fileServer := http.StripPrefix("/"+imagePath, http.FileServer(http.Dir(imagePath)))
+
+	mux.Handle("GET /"+imagePath+"/", fileServer)
+
 	mux.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
 		logf("%s request to %s", r.Method, r.URL)
 
@@ -133,16 +147,53 @@ func main() {
 		}
 
 		action := r.FormValue("action")
+		uploadFileName := ""
 
+		if action == "upload" {
+			r.Body = http.MaxBytesReader(w, r.Body, maxUploadSize)
+			if err := r.ParseMultipartForm(maxUploadSize); err != nil {
+				serveError(w, http.StatusBadRequest, err)
+				return
+			}
+			srcFile, header, err := r.FormFile("image_file")
+			if err != nil {
+				serveError(w, http.StatusBadRequest, err)
+				return
+			}
+			defer srcFile.Close()
+			if ct := header.Header.Get("Content-Type"); ct != "image/jpeg" {
+				serveError(w, http.StatusBadRequest, fmt.Errorf("upload must be of type image/jpeg, got %q", ct))
+				return
+			}
+			encodedPlayerName := base64.URLEncoding.EncodeToString([]byte(*user))
+			randSuffix, err := randStr(6)
+			if err != nil {
+				serveError(w, http.StatusInternalServerError, fmt.Errorf("generating file name: %w", err))
+				return
+			}
+			uploadFileName = path.Join(imagePath, fmt.Sprintf("%s.%d.%d.%s.jpg", encodedPlayerName, x, y, randSuffix))
+			dstFile, err := os.Create(uploadFileName)
+			if err != nil {
+				serveError(w, http.StatusInternalServerError, fmt.Errorf("failed to create file: %w", err))
+				return
+			}
+			defer dstFile.Close()
+			if _, err := io.Copy(dstFile, srcFile); err != nil {
+				serveError(w, http.StatusInternalServerError, fmt.Errorf("failed to write file: %w", err))
+				return
+			}
+			if err = dstFile.Close(); err != nil {
+				serveError(w, http.StatusInternalServerError, fmt.Errorf("failed to finish writing file: %w", err))
+				return
+			}
+			if err = srcFile.Close(); err != nil {
+				serveError(w, http.StatusInternalServerError, fmt.Errorf("failed to close file upload: %w", err))
+				return
+			}
+		}
 		spaceData := SpaceData{
 			BaseURL: basePath,
 		}
-		gameState.Modify(func(gs GameState) GameState {
-			switch action {
-
-			}
-			return gs
-		})
 		gameState.Modify(func(gs GameState) GameState {
 			pd := gs.Players[*user]
 			space := pd.Board.get(x, y)
@@ -152,6 +203,9 @@ func main() {
 				space.Completed = true
 			case "decomplete":
 				space.Completed = false
+			case "upload":
+				space.Image = uploadFileName
+				space.Completed = true
 			default:
 				needsUpdate = false
 			}

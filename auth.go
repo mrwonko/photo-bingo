@@ -60,12 +60,14 @@ func signUp(w http.ResponseWriter, r *http.Request) error {
 	if token.User == "" {
 		return errors.New("no username provided")
 	}
-	var pwBytes [10]byte
-	_, err := rand.Read(pwBytes[:])
+	if len(token.User) > maxUsernameLength {
+		return fmt.Errorf("username too long, limit %d characters", maxUsernameLength)
+	}
+	pw, err := randStr(10)
 	if err != nil {
 		return fmt.Errorf("generating password: %w", err)
 	}
-	token.Password = InsecurePlaintextPassword(authEncoding.EncodeToString(pwBytes[:]))
+	token.Password = InsecurePlaintextPassword(pw)
 	tokenJSON, err := json.Marshal(token)
 	if err != nil {
 		return fmt.Errorf("encoding session ID: %w", err)
@@ -105,6 +107,16 @@ func signUp(w http.ResponseWriter, r *http.Request) error {
 		Expires:  time.Now().AddDate(0, 1, 0),
 	})
 	return nil
+}
+
+// note that the result is base64-encoded, leading to a longer length than the given number of bytes
+func randStr(bytes int) (string, error) {
+	randBytes := make([]byte, bytes)
+	_, err := rand.Read(randBytes)
+	if err != nil {
+		return "", err
+	}
+	return authEncoding.EncodeToString(randBytes), nil
 }
 
 type InsecurePlaintextAuthToken struct {

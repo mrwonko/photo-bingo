@@ -5,12 +5,26 @@
 <p>{{.Space.Goal.Description}}</p>
 
 {{if not .Space.Locked}}
-<form method="POST">
-    <input type="hidden" name="action" value="{{if .Space.Completed}}decomplete{{else}}complete{{end}}" />
-    <button type="submit">{{if .Space.Completed}}de-complete{{else}}complete{{end}}</button>
-</form>
+<p>
+    <form method="POST">
+        <input type="hidden" name="action" value="{{if .Space.Completed}}decomplete{{else}}complete{{end}}" />
+        <button type="submit">{{if .Space.Completed}}de-complete{{else}}complete{{end}}</button>
+    </form>
+</p>
+<p>
+    <form method="POST" enctype="multipart/form-data">
+        <input type="hidden" name="action" value="upload" />
+        <label for="image_file">Upload JPG (max 5 MB)</label>
+        <input type="file" id="image_file" name="image_file" accept=".jpg, .jpeg, image/jpeg" required /><br/>
+        <button type="submit">Upload Image</button>
+    </form>
+</p>
 {{end}}
 
 <p><a href="{{.BaseURL}}">Back</a></p>
+
+{{if ne .Space.Image ""}}
+<img alt="upload for prompt {{.Space.Goal.Name}}" src="{{.BaseURL}}/{{.Space.Image}}" />
+{{end}}
 
 {{template "footer.html"}}

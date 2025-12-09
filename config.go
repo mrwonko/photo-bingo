@@ -1,8 +1,11 @@
 package main
 
 const (
-	basePath = "/photo-bingo"
-	verbose  = true
+	basePath          = "/photo-bingo"
+	imagePath         = "images"
+	verbose           = true
+	maxUploadSize     = 5 * 1024 * 1024 // when changing this, adjust space.html
+	maxUsernameLength = 64
 
 	latestStatePath   = "state.json"
 	previousStatePath = "state.prev.json"
