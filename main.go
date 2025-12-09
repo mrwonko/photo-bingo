@@ -215,6 +215,8 @@ func main() {
 			spaceData.Space = space.display()
 			return gs
 		})
+		// save changes
+		saveTrigger <- struct{}{}
 		serveTemplate(w, space, spaceData)
 	})
 
