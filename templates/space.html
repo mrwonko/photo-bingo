@@ -4,10 +4,12 @@
 
 <p>{{.Space.Goal.Description}}</p>
 
+{{if not .Space.Locked}}
 <form method="POST">
     <input type="hidden" name="action" value="{{if .Space.Completed}}decomplete{{else}}complete{{end}}" />
     <button type="submit">{{if .Space.Completed}}de-complete{{else}}complete{{end}}</button>
 </form>
+{{end}}
 
 <a href="{{.BaseURL}}">Back</a>
 
